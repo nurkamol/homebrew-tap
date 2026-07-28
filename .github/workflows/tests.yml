@@ -8,16 +8,14 @@ on:
 
 jobs:
   test-bot:
+    # macOS 26 and nothing else. The formula declares `depends_on macos: :tahoe` because
+    # the package it builds targets macOS 26 deliberately, so the scaffolded Intel-15 and
+    # Ubuntu jobs could only ever fail. A red badge that is always red teaches people to
+    # ignore the badge, which is worse than not having one.
     strategy:
       matrix:
-        os: [ macos-15-intel, macos-26 ]
-        include:
-          - os: ubuntu-latest
-            container:
-              image: ghcr.io/homebrew/brew:main
-              options: --privileged
+        os: [ macos-26 ]
     runs-on: ${{ matrix.os }}
-    container: ${{ fromJSON(toJSON(matrix.container)) }} # zizmor: ignore[unpinned-images]
     permissions:
       actions: read
       checks: read
