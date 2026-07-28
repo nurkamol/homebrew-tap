@@ -40,6 +40,22 @@ jobs:
       - run: brew test-bot --only-setup
 
       - run: brew test-bot --only-tap-syntax
+
+      # `--only-formulae` builds bottles and only runs on pull requests, so a push to main
+      # checked the formula's *syntax* and never once built it. That is the half that
+      # matters: a formula can be perfectly styled and still not compile, and the machine
+      # this was written on cannot check — its Command Line Tools are older than the Xcode
+      # it has selected, and Homebrew refuses on that alone. So the runner does it.
+      #
+      # `--HEAD` because there is no tagged release yet. When there is, this becomes a plain
+      # `brew install nurkamol/tap/replay` and gains a second job for the stable path.
+      - name: Install and test the formula for real
+        run: |
+          brew install --HEAD --verbose nurkamol/tap/replay
+          brew test nurkamol/tap/replay
+          replay --version
+          replay today --database /nonexistent/activity.db || test $? -eq 2
+
       - run: brew test-bot --only-formulae
         if: github.event_name == 'pull_request'
 
