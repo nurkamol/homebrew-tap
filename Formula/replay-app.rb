@@ -27,11 +27,11 @@ class ReplayApp < Formula
   depends_on macos: :tahoe
 
   def install
-    # `REPLAY_BUILD_FLAGS` reaches SwiftPM through the script. SwiftPM's own sandbox and
-    # Homebrew's do not compose, and this package fetches no dependencies, so there is
-    # nothing for it to guard against.
-    ENV["REPLAY_BUILD_FLAGS"] = "--disable-sandbox"
-    system "./scripts/make-app.sh", "release"
+    # `--disable-sandbox` as an argument, not an environment variable: Homebrew scrubs the
+    # environment it hands a build, so the first version of this silently did nothing and
+    # SwiftPM tried to sandbox inside Homebrew's sandbox — `sandbox_apply: Operation not
+    # permitted`. The package fetches no dependencies, so there is nothing to guard against.
+    system "./scripts/make-app.sh", "release", "--disable-sandbox"
     prefix.install "build/Replay.app"
     # A launcher, so `replay-app` opens it from a shell without anyone hunting for the
     # bundle inside the Cellar.
