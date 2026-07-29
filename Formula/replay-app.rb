@@ -16,13 +16,16 @@
 class ReplayApp < Formula
   desc "Private, local timeline of the apps you use — the macOS application"
   homepage "https://github.com/nurkamol/replay-swift"
-  url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.7.tar.gz"
-  sha256 "8f05f42cee7c56195076c86535d6ae670e2707c826e27944276f3bb71ac4bcc9"
+  url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.8.tar.gz"
+  sha256 "78f1bf9e1f21bd137cb8fc73872c417cb39d33d2953ce98bb10a97ae47be0f96"
   license "MIT"
   head "https://github.com/nurkamol/replay-swift.git", branch: "main"
 
+  # macOS 14 since 0.9.8. The two interface APIs that begin later — `glassEffect` (26) and
+  # `Color.mix(with:by:)` (15) — are guarded, and below 26 the Surfaces setting offers the
+  # two styles that exist. Measured by building against each floor, not assumed.
   depends_on xcode: :build
-  depends_on macos: :tahoe
+  depends_on macos: :sonoma
 
   def install
     # `--disable-sandbox` as an argument, not an environment variable: Homebrew scrubs the

@@ -16,17 +16,16 @@
 class Replay < Formula
   desc "Your own local timeline of the apps you use, from a shell"
   homepage "https://github.com/nurkamol/replay-swift"
-  url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.7.tar.gz"
-  sha256 "8f05f42cee7c56195076c86535d6ae670e2707c826e27944276f3bb71ac4bcc9"
+  url "https://github.com/nurkamol/replay-swift/archive/refs/tags/v0.9.8.tar.gz"
+  sha256 "78f1bf9e1f21bd137cb8fc73872c417cb39d33d2953ce98bb10a97ae47be0f96"
   license "MIT"
   head "https://github.com/nurkamol/replay-swift.git", branch: "main"
 
-  # The package targets macOS 26 deliberately — the *app* leans on APIs that begin there,
-  # and the CLI shares its `Package.swift`. Splitting the manifest to let the CLI build on
-  # something older would mean two platform declarations to keep in step, which is a worse
-  # trade than this line.
+  # macOS 14. Two APIs in the interface begin later — `glassEffect` at 26 and
+  # `Color.mix(with:by:)` at 15 — and both are guarded, so the package builds and runs three
+  # OS generations back. Measured by building against each floor in turn rather than assumed.
   depends_on xcode: :build
-  depends_on macos: :tahoe
+  depends_on macos: :sonoma
 
   def install
     # `--disable-sandbox` because SwiftPM's own sandbox and Homebrew's do not compose, and
