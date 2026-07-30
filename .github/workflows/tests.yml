@@ -8,10 +8,10 @@ on:
 
 jobs:
   test-bot:
-    # macOS 26 and nothing else. The formula declares `depends_on macos: :tahoe` because
-    # the package it builds targets macOS 26 deliberately, so the scaffolded Intel-15 and
-    # Ubuntu jobs could only ever fail. A red badge that is always red teaches people to
-    # ignore the badge, which is worse than not having one.
+    # macOS 26 and nothing else. The floor is `:sonoma` since 0.9.8 and this could in
+    # principle run on macos-14 too — but the source build needs a full Xcode for SwiftUI's
+    # macro plugins, and the runner images differ in which one is selected. One green job
+    # that means something beats three that need explaining.
     strategy:
       matrix:
         os: [ macos-26 ]
@@ -56,18 +56,38 @@ jobs:
           replay --version
           replay today --database /nonexistent/activity.db || test $? -eq 2
 
-      # The application, built the same way. This is the claim the whole formula exists to
-      # make — that an app compiled on the machine it runs on needs no Developer ID — so it
-      # is worth proving on a runner that has never seen the project rather than asserting.
-      - name: Install and test the application for real
+      # The application built from source. This is the claim that formula exists to make —
+      # that an app compiled on the machine it runs on needs no Developer ID — so it is worth
+      # proving on a runner that has never seen the project rather than asserting.
+      #
+      # `--formula` is required now and its absence is what broke this job. The token
+      # `replay-app` belongs to the *cask*; the source formula was renamed to
+      # `replay-app-source` so that a plain `brew install nurkamol/tap/replay-app` resolves to
+      # the prebuilt app, which is what somebody typing it expects. Without the flag this
+      # asked for a formula by a name only a cask now has: "No available formula with the
+      # name nurkamol/tap/replay-app".
+      - name: Install and test the application, built from source
         run: |
-          brew install --HEAD --verbose nurkamol/tap/replay-app
-          brew test nurkamol/tap/replay-app
+          brew install --HEAD --verbose --formula nurkamol/tap/replay-app-source
+          brew test --formula nurkamol/tap/replay-app-source
           codesign --verify --deep --verbose=2 \
-            "$(brew --prefix)/opt/replay-app/Replay.app"
+            "$(brew --prefix)/opt/replay-app-source/Replay.app"
           # Nothing built here is quarantined; if that ever changes, the premise is wrong.
           ! xattr -p com.apple.quarantine \
-            "$(brew --prefix)/opt/replay-app/Replay.app" 2>/dev/null
+            "$(brew --prefix)/opt/replay-app-source/Replay.app" 2>/dev/null
+
+      # And the prebuilt cask, which makes the opposite claim: it *is* a download, so macOS
+      # does mark it, and the caveats tell somebody how to open it. Worth proving both ways —
+      # the two install routes exist precisely because they differ here.
+      - name: Install the prebuilt cask
+        run: |
+          brew install --cask --verbose nurkamol/tap/replay-app
+          test -d /Applications/Replay.app
+          /usr/bin/plutil -extract CFBundleShortVersionString raw \
+            /Applications/Replay.app/Contents/Info.plist
+          # Quarantined, because Homebrew quarantines cask downloads. If this ever stops
+          # being true the caveats are telling people to do something pointless.
+          xattr -p com.apple.quarantine /Applications/Replay.app
 
       - run: brew test-bot --only-formulae
         if: github.event_name == 'pull_request'
