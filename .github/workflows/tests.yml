@@ -69,7 +69,9 @@ jobs:
       - name: Install and test the application, built from source
         run: |
           brew install --HEAD --verbose --formula nurkamol/tap/replay-app-source
-          brew test --formula nurkamol/tap/replay-app-source
+          # No `--formula` here: `brew test` does not take it, and does not need it —
+          # nothing else is called `replay-app-source`.
+          brew test nurkamol/tap/replay-app-source
           codesign --verify --deep --verbose=2 \
             "$(brew --prefix)/opt/replay-app-source/Replay.app"
           # Nothing built here is quarantined; if that ever changes, the premise is wrong.
