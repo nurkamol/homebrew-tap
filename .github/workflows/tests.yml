@@ -78,18 +78,28 @@ jobs:
           ! xattr -p com.apple.quarantine \
             "$(brew --prefix)/opt/replay-app-source/Replay.app" 2>/dev/null
 
-      # And the prebuilt cask, which makes the opposite claim: it *is* a download, so macOS
-      # does mark it, and the caveats tell somebody how to open it. Worth proving both ways —
-      # the two install routes exist precisely because they differ here.
+      # And the prebuilt cask. It *is* a download, so Homebrew marks it — and then the cask's
+      # own `postflight` clears the mark, which is the whole reason installing this way no
+      # longer ends at a Gatekeeper dialog. So the assertion is that the flag is **gone**.
+      #
+      # It used to assert the opposite, and said so: "Quarantined, because Homebrew quarantines
+      # cask downloads. If this ever stops being true the caveats are telling people to do
+      # something pointless." That is exactly what happened — 0.9.9 added the postflight and
+      # this job went red on the next push. The test was right to fail; it was describing the
+      # old contract. Kept as an assertion rather than deleted, because a postflight that
+      # silently stopped working would otherwise be invisible until somebody hit the dialog.
       - name: Install the prebuilt cask
         run: |
           brew install --cask --verbose nurkamol/tap/replay-app
           test -d /Applications/Replay.app
           /usr/bin/plutil -extract CFBundleShortVersionString raw \
             /Applications/Replay.app/Contents/Info.plist
-          # Quarantined, because Homebrew quarantines cask downloads. If this ever stops
-          # being true the caveats are telling people to do something pointless.
-          xattr -p com.apple.quarantine /Applications/Replay.app
+          # No quarantine flag: the postflight removed it. If this starts failing, installs
+          # are meeting "Apple could not verify Replay" again and the caveats are now wrong.
+          ! xattr -p com.apple.quarantine /Applications/Replay.app 2>/dev/null
+          # And the app it installed is the one that was signed, not an ad-hoc build.
+          codesign --verify --deep --strict /Applications/Replay.app
+          codesign -d -r- /Applications/Replay.app 2>&1 | grep -q "certificate leaf"
 
       - run: brew test-bot --only-formulae
         if: github.event_name == 'pull_request'
