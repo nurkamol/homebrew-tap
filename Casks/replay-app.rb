@@ -38,8 +38,8 @@ cask "replay-app" do
   # shas the artefact it just built. It used to be edited by hand, and 0.9.8 briefly shipped
   # with 0.9.7's checksum against a 0.9.8 URL — an install that could only fail. A number
   # copied by a person between two repositories is a number that will eventually be wrong.
-  version "0.9.9"
-  sha256 "ccd860837dff29c676087ea162d6a3c3b085badde94619f8b7d8b6ecfb7620ce"
+  version "0.9.10"
+  sha256 "bb8e66118cfbcfb72860c421c7c1384e48cd3ea93875fea87e972bb5e8e8826c"
 
   url "https://github.com/nurkamol/replay-swift/releases/download/v#{version}/Replay-#{version}.zip",
       verified: "github.com/nurkamol/replay-swift/"
