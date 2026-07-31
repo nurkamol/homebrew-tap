@@ -75,8 +75,14 @@ jobs:
           codesign --verify --deep --verbose=2 \
             "$(brew --prefix)/opt/replay-app-source/Replay.app"
           # Nothing built here is quarantined; if that ever changes, the premise is wrong.
-          ! xattr -p com.apple.quarantine \
-            "$(brew --prefix)/opt/replay-app-source/Replay.app" 2>/dev/null
+          # `if ...; then exit 1; fi` and not `! ...`, which shellcheck is right about
+          # (SC2251): under `bash -e` a negated command cannot fail the step, so the
+          # assertion below spent its whole life unable to fire.
+          if xattr -p com.apple.quarantine \
+               "$(brew --prefix)/opt/replay-app-source/Replay.app" 2>/dev/null; then
+            echo "::error::a source build is quarantined — the two install routes no longer differ"
+            exit 1
+          fi
 
       # And the prebuilt cask. It *is* a download, so Homebrew marks it — and then the cask's
       # own `postflight` clears the mark, which is the whole reason installing this way no
@@ -96,7 +102,10 @@ jobs:
             /Applications/Replay.app/Contents/Info.plist
           # No quarantine flag: the postflight removed it. If this starts failing, installs
           # are meeting "Apple could not verify Replay" again and the caveats are now wrong.
-          ! xattr -p com.apple.quarantine /Applications/Replay.app 2>/dev/null
+          if xattr -p com.apple.quarantine /Applications/Replay.app 2>/dev/null; then
+            echo "::error::the quarantine flag survived — the cask's postflight did not run"
+            exit 1
+          fi
           # And the app it installed is the one that was signed, not an ad-hoc build.
           codesign --verify --deep --strict /Applications/Replay.app
           codesign -d -r- /Applications/Replay.app 2>&1 | grep -q "certificate leaf"
