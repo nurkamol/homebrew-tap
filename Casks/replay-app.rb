@@ -38,8 +38,8 @@ cask "replay-app" do
   # shas the artefact it just built. It used to be edited by hand, and 0.9.8 briefly shipped
   # with 0.9.7's checksum against a 0.9.8 URL — an install that could only fail. A number
   # copied by a person between two repositories is a number that will eventually be wrong.
-  version "0.9.8"
-  sha256 "09f9f8825c74beeef01e88ca8f6da0c1af910bd5ad1541fb27ec69679ec86366"
+  version "0.9.9"
+  sha256 "ccd860837dff29c676087ea162d6a3c3b085badde94619f8b7d8b6ecfb7620ce"
 
   url "https://github.com/nurkamol/replay-swift/releases/download/v#{version}/Replay-#{version}.zip",
       verified: "github.com/nurkamol/replay-swift/"
@@ -49,6 +49,11 @@ cask "replay-app" do
 
   # macOS 14 as of 0.9.8. The two interface APIs that begin later are guarded; see
   # docs/FINDINGS.md and the CHANGELOG entry for how that floor was measured.
+  #
+  # **The floor is compiled for, not tested on.** Development happens on 27 and CI runs on 26,
+  # so 14 and 15 are reached by guards and a deployment target rather than by anybody watching
+  # it launch. The caveats say so, because a person on Sonoma installing this deserves to know
+  # which of the two it is.
   depends_on macos: :sonoma
 
   app "Replay.app"
@@ -106,6 +111,10 @@ cask "replay-app" do
     If you would rather macOS did the checking, build from source instead. That copy is
     compiled on your Mac, never downloaded, and never quarantined:
       brew install nurkamol/tap/replay-app-source
+
+    On macOS 14 or 15: Replay is built for these and the two newer APIs it uses are guarded,
+    but it has never been run on either — the work happens on macOS 26 and 27. It should be
+    fine. If it is not, that is worth an issue rather than a shrug.
 
     Replay records with no permissions at all — no Accessibility, no Automation, no Screen
     Recording — and keeps everything in one local SQLite file.
